@@ -1,1 +1,0 @@
-# Chandhu Tatineni's blog
