@@ -1,8 +1,8 @@
 ---
 layout: post
-title: Deep Generative Models: A Comprehensive Analysis of the Evolution of Diffusion and Autoregressive Architectures
+title: Deep Generative Models":" A Comprehensive Analysis of the Evolution of Diffusion and Autoregressive Architectures
 date: 2025-12-28
-description: Deep Generative Models: A Comprehensive Analysis of the Evolution of Diffusion and Autoregressive Architectures
+description: Deep Generative Models":" A Comprehensive Analysis of the Evolution of Diffusion and Autoregressive Architectures
 tags: AI/ML
 categories: AI/ML
 related_posts: false
