@@ -16,11 +16,11 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/blog/";
           },
-        },{id: "post-deep-generative-models-quot-quot-a-comprehensive-analysis-of-the-evolution-of-diffusion-and-autoregressive-architectures",
+        },{id: "post-deep-generative-models-a-comprehensive-analysis-of-the-evolution-of-diffusion-and-autoregressive-architectures",
         
-          title: "Deep Generative Models&quot;:&quot; A Comprehensive Analysis of the Evolution of Diffusion and Autoregressive...",
+          title: "Deep Generative Models - A Comprehensive Analysis of the Evolution of Diffusion and...",
         
-        description: "Deep Generative Models&quot;:&quot; A Comprehensive Analysis of the Evolution of Diffusion and Autoregressive Architectures",
+        description: "Deep Generative Models - A Comprehensive Analysis of the Evolution of Diffusion and Autoregressive Architectures",
         section: "Posts",
         handler: () => {
           
