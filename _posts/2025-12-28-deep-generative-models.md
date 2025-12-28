@@ -8,8 +8,6 @@ categories: AI/ML
 related_posts: false
 ---
 
-# Deep Generative Models: A Comprehensive Analysis of the Evolution of Diffusion and Autoregressive Architectures
-
 ## 1. Introduction: The Probabilistic Foundations of Deep Generative Modeling
 
 The objective of deep generative modeling is to construct a computational system capable of learning the true data distribution, $p_{data}(x)$, from a finite set of observed samples $\mathcal{D} = \{x^{(1)}, x^{(2)}, \dots, x^{(N)}\}$, and subsequently generating novel samples $x_{new} \sim p_{model}(x)$ that are statistically indistinguishable from the original distribution. This endeavor resides at the intersection of high-dimensional statistics, probability theory, and deep learning optimization. The trajectory of this field has been defined by a singular, persistent mathematical challenge: the intractability of the partition function in high-dimensional spaces.
