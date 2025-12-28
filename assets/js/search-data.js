@@ -16,15 +16,15 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/blog/";
           },
-        },{id: "post-",
+        },{id: "post-deep-generative-models-quot-quot-a-comprehensive-analysis-of-the-evolution-of-diffusion-and-autoregressive-architectures",
         
-          title: "",
+          title: "Deep Generative Models&quot;:&quot; A Comprehensive Analysis of the Evolution of Diffusion and Autoregressive...",
         
-        description: "",
+        description: "Deep Generative Models&quot;:&quot; A Comprehensive Analysis of the Evolution of Diffusion and Autoregressive Architectures",
         section: "Posts",
         handler: () => {
           
-            window.location.href = "/blog/2025/2025-12-28-deep-generative-models/";
+            window.location.href = "/blog/2025/deep-generative-models/";
           
         },
       },{id: "books-the-godfather",
