@@ -38,6 +38,17 @@ ninja.data = [{
             window.location.href = "/blog/2025/EA-Digital-Twin/";
           
         },
+      },{id: "post-architecting-domain-specific-intelligence-knowledge-distillation-and-small-language-model-construction",
+        
+          title: "Architecting Domain-Specific Intelligence - Knowledge Distillation and Small Language Model Construction",
+        
+        description: "Domain specific SLM Distillation explained",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2025/Domain-specific-Knowledge-Distillation.md/";
+          
+        },
       },{id: "books-the-godfather",
           title: 'The Godfather',
           description: "",
