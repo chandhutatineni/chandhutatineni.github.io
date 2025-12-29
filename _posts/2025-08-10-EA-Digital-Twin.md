@@ -9,6 +9,12 @@ related_posts: false
 thumbnail: assets/img/EA/EA.png
 ---
 
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/EA/EA-1.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+    </div>
+</div>
+
 ## **Executive Summary**
 
 The contemporary enterprise has mutated into a complex adaptive system of such scale and intricacy that it defies traditional management methodologies. As organizations expand their digital footprints, the interdependencies between business capabilities, information technology (IT) infrastructure, and human processes have formed a "web-like" ecosystem that creates significant governance challenges. This report provides an exhaustive analysis of the paradigm shift from static Enterprise Architecture (EA) to the dynamic, computational model known as the Digital Twin of an Enterprise (DToE).
@@ -41,7 +47,7 @@ This friction is exacerbated by a lack of business buy-in. When EA is perceived 
 
 In response to these existential challenges, the discipline is undergoing a metamorphosis into "EA 2.0." This evolution mirrors the broader shift in software development from Waterfall to Agile. It represents a fundamental change in philosophy: from rigid, comprehensive planning to continuous, data-driven adaptation.
 
-The hallmark of EA 2.0 is the **democratization of data**. Unlike its predecessor, which was the domain of a select few certified experts, EA 2.0 leverages modern SaaS platforms to allow stakeholders across the company to access and contribute to architectural data. This moves the discipline away from a "command and control" structure toward a collaborative ecosystem where information flows freely between business and IT leaders.
+The hallmark of EA 2.0 is the **democratization of data**. Unlike its predecessor, which was the domain of a select few certified experts, EA 2.0 leverages modern Centralized and Acceable platforms to allow stakeholders across the company to access and contribute to architectural data. This moves the discipline away from a "command and control" structure toward a collaborative ecosystem where information flows freely between business and IT leaders.
 
 Crucially, EA 2.0 shifts from being "model-driven" to "data-driven." Rather than relying on manual data entry and drawing, modern EA platforms integrate directly with source systems (like CMDBs, cloud platforms, and code repositories) to ingest data automatically. This ensures that the architectural view is always synchronized with reality, closing the latency gap that doomed traditional efforts.
 
