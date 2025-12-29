@@ -22,16 +22,16 @@ latest_posts:
   limit: 3 # leave blank to include all the blog posts
 ---
 ### A Technologist Committed to Continuous Learning
+(Sharing my personal perspective — these thoughts are mine alone and don’t speak for the organization I work with.)
 
-I’m a technology professional with a deep interest in how complex systems are designed, built, and scaled. My work spans **AI and Machine Learning**, **Enterprise Architecture**, **Cryptography**, and **Blockchain**—fields that continue to evolve rapidly and challenge how we think about information, security, and intelligent systems.
+I’m a technology professional with a deep interest in how complex systems are designed, built, and scaled. My work spans **AI and Machine Learning**, **Enterprise Architecture**, and **Blockchain**—fields that continue to evolve rapidly and challenge how we think about information, security, and intelligent systems.
 
 This site reflects my belief that learning is an ongoing process. Writing helps me refine my understanding, question assumptions, and build clarity around the technologies shaping the future.
 
 ### Professional Focus
 
 - **AI/ML Exploration** — studying models, algorithms, and practical applications.  
-- **Enterprise Architecture** — designing scalable, resilient, and business-aligned systems.  
-- **Cryptography** — understanding the foundations that secure digital communication.  
+- **Enterprise Architecture** — designing scalable, resilient, and business-aligned systems.   
 - **Blockchain & Distributed Systems** — analyzing decentralized technologies and their real-world impact.
 
 My goal is to connect these domains, uncover patterns that link them, and share insights that are both technically grounded and accessible.
