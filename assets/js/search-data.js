@@ -31,7 +31,7 @@ ninja.data = [{
         
           title: "The Panoptic Enterprise - Architectural Evolution, Systemic Intelligence, and the Digital Twin of...",
         
-        description: "Deep Generative Models - A Comprehensive Analysis of the Evolution of Diffusion and Autoregressive Architectures",
+        description: "The Panoptic Enterprise - Architectural Evolution, Systemic Intelligence, and the Digital Twin of the Organization",
         section: "Posts",
         handler: () => {
           
