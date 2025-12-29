@@ -2,7 +2,7 @@
 layout: post
 title: The Panoptic Enterprise - Architectural Evolution, Systemic Intelligence, and the Digital Twin of the Organization
 date: 2025-08-10
-description: Deep Generative Models - A Comprehensive Analysis of the Evolution of Diffusion and Autoregressive Architectures
+description: The Panoptic Enterprise - Architectural Evolution, Systemic Intelligence, and the Digital Twin of the Organization
 tags: EA
 categories: EA
 related_posts: false
