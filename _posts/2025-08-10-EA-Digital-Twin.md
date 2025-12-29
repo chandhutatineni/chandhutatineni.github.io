@@ -404,11 +404,11 @@ Once the deal is signed, the race to integrate begins. The DToE facilitates the 
 
 ## **8\. Strategic Application: Business Transformation and Servitization**
 
-Beyond M\&A, the DToE is the essential tool for navigating fundamental shifts in business models, particularly the transition to "Servitization" (Product-as-a-Service).
+Beyond M\&A, the DToE is the essential tool for navigating fundamental shifts in business models, particularly the transition to "Servitization" (Product-as-a-Service) or outcome-based engagement models. This transformation applies across industries—from manufacturing to financial services to insurance.
 
-### **8.1 The Shift from Product to Service**
+### **8.1 The Shift from Transactional to Outcome-Based Business Models**
 
-Manufacturing companies are increasingly moving from selling discrete products to selling outcomes (e.g., selling "thrust hours" instead of jet engines). This requires the manufacturer to maintain ownership of the asset and guarantee its performance. This business model is impossible without a digital twin.
+Organizations across industries are shifting from selling discrete products or transactions to selling outcomes, results, and managed services. Rather than customers buying and owning assets, they increasingly prefer to "subscribe" to outcomes. This requires the provider to maintain accountability for performance, assume risk, and continuously optimize. This fundamental business model transformation is impossible without a digital twin, which provides real-time visibility into actual performance against promised outcomes and enables predictive optimization of the partnership.
 
 ### **8.2 Example Scenario: Financial Services - From Transaction Processing to Outcome-Based Pricing**
 
