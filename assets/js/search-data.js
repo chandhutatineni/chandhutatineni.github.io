@@ -42,7 +42,7 @@ ninja.data = [{
         
           title: "The Panoptic Enterprise - Architectural Evolution, Systemic Intelligence, and the Digital Twin of...",
         
-        description: "The Panoptic Enterprise - Architectural Evolution, Systemic Intelligence, and the Digital Twin of the Organization",
+        description: "Transforming the Enterprise Architecture using Digital Twin and Agnetic AI",
         section: "Posts",
         handler: () => {
           
