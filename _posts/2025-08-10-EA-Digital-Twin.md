@@ -6,6 +6,7 @@ description: Deep Generative Models - A Comprehensive Analysis of the Evolution 
 tags: EA
 categories: EA
 related_posts: false
+thumbnail: assets/img/EA/EA.png
 ---
 
 ## **Executive Summary**
