@@ -114,7 +114,7 @@ The architecture can be conceptualized as a stack of five primary layers, each t
 
 At the base of the stack lies the "Real World"—the actual entities and processes that the twin mimics. In an enterprise context, the "sensors" are not physical gauges but the transactional systems that record business activity.
 
-* **Enterprise Systems:** ERP (SAP, Oracle), CRM (Salesforce), HRIS (Workday), and ITSM (ServiceNow) act as the primary record keepers.
+* **Enterprise Systems:** Applications (InHouse, Third party), ERP (SAP, Oracle), CRM (Salesforce), HRIS (Workday), and ITSM (ServiceNow) act as the primary record keepers.
 * **IT Infrastructure:** Cloud platforms (AWS, Azure), network devices, and servers provide the data regarding the technological substrate of the firm.
 * **IoT and OT:** For manufacturing enterprises, the operational technology (OT) layer provides physical production data.
 
