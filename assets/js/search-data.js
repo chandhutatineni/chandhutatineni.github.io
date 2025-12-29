@@ -27,6 +27,17 @@ ninja.data = [{
             window.location.href = "/blog/2025/deep-generative-models/";
           
         },
+      },{id: "post-deep-generative-modeling-variational-autoencoders-and-beyond",
+        
+          title: "Deep Generative Modeling - Variational Autoencoders and Beyond",
+        
+        description: "Overview of Variational Auto Encoders (VAE) and other architectures of VAE",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2025/VAEs/";
+          
+        },
       },{id: "post-the-panoptic-enterprise-architectural-evolution-systemic-intelligence-and-the-digital-twin-of-the-organization",
         
           title: "The Panoptic Enterprise - Architectural Evolution, Systemic Intelligence, and the Digital Twin of...",
