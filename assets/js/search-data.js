@@ -27,6 +27,17 @@ ninja.data = [{
             window.location.href = "/blog/2025/deep-generative-models/";
           
         },
+      },{id: "post-the-panoptic-enterprise-architectural-evolution-systemic-intelligence-and-the-digital-twin-of-the-organization",
+        
+          title: "The Panoptic Enterprise - Architectural Evolution, Systemic Intelligence, and the Digital Twin of...",
+        
+        description: "Deep Generative Models - A Comprehensive Analysis of the Evolution of Diffusion and Autoregressive Architectures",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2025/EA-Digital-Twin/";
+          
+        },
       },{id: "books-the-godfather",
           title: 'The Godfather',
           description: "",
