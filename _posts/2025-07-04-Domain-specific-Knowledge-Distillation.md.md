@@ -17,7 +17,6 @@ We are currently witnessing a pivotal shift toward **Small Language Models (SLMs
 
 The premise of this domain-specific construction is not merely compression; it is densification. By narrowing the semantic scope of the model to a specific domain (e.g., telecommunications, contract law, or bioinformatics) and utilizing advanced distillation techniques like **Program-Aided Distillation (PaD)** and **Approximate Likelihood Matching (ALM)**, we can engineer SLMs that outperform their teacher models within that specific vertical while consuming a fraction of the inference compute. This report serves as an exhaustive technical blueprint for this process, moving from the information-theoretic foundations of probability transfer to the precise algorithmic steps required to handle tokenizer mismatches and synthetic data curation.
 
-## ---
 
 **2. Theoretical Foundations: The Physics of Knowledge Transfer**
 
@@ -103,7 +102,6 @@ $$
 
 As $\alpha \to 1$, this converges to KL divergence. However, setting $\alpha > 1$ penalizes the student more heavily for assigning low probability to events the teacher thinks are likely (mode-seeking behavior), while $\alpha < 1$ encourages the student to cover the entire support of the teacher's distribution (mean-seeking behavior). In domain-specific distillation, where we want the student to capture the exact reasoning modes of the teacher (e.g., specific legal interpretations), Renyi-based regularization can prevent the student from "averaging out" critical but rare insights present in the teacher's soft tails.
 
-## ---
 
 **3. Data-Centric Strategy: The "Textbooks" Methodology**
 
@@ -137,7 +135,6 @@ A counter-intuitive but empirically validated step is to fine-tune the Teacher m
 
 By performing **SFT on the Teacher** with the specific domain vocabulary and tasks, we sharpen the Teacher's distribution. This ensures that the "dark knowledge" transferred to the Student is specifically relevant to the target domain, rather than generic linguistic correlations. This "Teacher Adaptation" step significantly boosts Student performance across metrics, irrespective of the student's vocabulary size.
 
-## ---
 
 **4. Advanced Distillation Architectures: Beyond Logits**
 
@@ -188,7 +185,6 @@ For domains requiring strict logical or arithmetic precision (e.g., financial mo
 Why PaD works for SLMs:  
 Small models struggle with arithmetic stability (e.g., multiplying large numbers). However, they are surprisingly good at learning syntax (e.g., writing a math.prod() function call). By offloading the computation to a deterministic interpreter, we bypass the weak arithmetic capabilities of the SLM while leveraging its strong syntactic learning.
 
-## ---
 
 **5. Addressing the Tokenizer Mismatch: Universal Distillation**
 
@@ -243,7 +239,6 @@ To correct this, ALM implements **Outcome Chunk Debiasing**. This involves norma
 Code Implementation Note:  
 The tokenkit library provides the reference implementation for ALM. It is essential for distilling models like Llama-3 into Byte-level architectures or specialized domain tokenizers (e.g., biological sequence tokenizers) where the vocabulary overlap is zero.
 
-## ---
 
 **6. Engineering the Pipeline: Implementation Guide**
 
@@ -294,7 +289,6 @@ Running a 70B Teacher and a Student simultaneously requires massive VRAM (approx
 * **Step 2:** Train the Student using the saved logits.  
   This allows training a domain-specific SLM on a single consumer GPU (e.g., RTX 4090).
 
-## ---
 
 **7. Evaluation and Validation**
 
@@ -315,7 +309,6 @@ Create a "Holdout Set" of 500-1000 domain problems that were *not* used in the s
 * **Math/Logic:** Use GSM8K for arithmetic reasoning verification.  
 * **Custom:** For a specific domain (e.g., "Telecommunications Standards"), curate a set of 100 multiple-choice questions based on the technical manuals.
 
-## ---
 
 ## **8. Example - step-by-step blueprint to transferring legal knowledge to an SLM.**
 
@@ -375,8 +368,6 @@ Should access to the Teacher's raw probabilistic outputs (logits) be availableâ€
 
 * **Mechanism:** Training extends beyond merely teaching the Student the "correct answer." It incorporates teaching the Teacher's calculated *certainty* or *uncertainty* distribution.  
 * *Example:* If the Teacher assigns a 90% probability to the crime being classified as "Murder" and a 10% probability to "Manslaughter," the Student is compelled to learn this exact nuanced probability distribution. This methodology facilitates the transfer of the "nuance" (Dark Knowledge) previously discussed.
-
-## 
 
 ## **9. Conclusion**
 
