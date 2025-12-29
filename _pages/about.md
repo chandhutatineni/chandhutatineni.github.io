@@ -24,7 +24,7 @@ latest_posts:
 ### A Technologist Committed to Continuous Learning
 (Sharing my personal perspective — these thoughts are mine alone and don’t speak for the organization I work with.)
 
-I’m a technology professional with a deep interest in how complex systems are designed, built, and scaled. My work spans **AI and Machine Learning**, **Enterprise Architecture**, and **Blockchain**—fields that continue to evolve rapidly and challenge how we think about information, security, and intelligent systems.
+I’m a technology professional with a deep interest in how complex systems are designed, built, and scaled. My work spans **AI and Machine Learning**, **Enterprise Architecture**, and **Distributed Systems**—fields that continue to evolve rapidly and challenge how we think about information, security, and intelligent systems.
 
 This site reflects my belief that learning is an ongoing process. Writing helps me refine my understanding, question assumptions, and build clarity around the technologies shaping the future.
 
