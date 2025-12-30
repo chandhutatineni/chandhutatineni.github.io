@@ -6,6 +6,7 @@ description: Deep Generative Models - A Comprehensive Analysis of the Evolution 
 tags: AI/ML
 categories: AI/ML
 related_posts: false
+thumbnail: assets/img/dgm/dgm.png
 ---
 
 ## 1. Introduction: The Probabilistic Foundations of Deep Generative Modeling
