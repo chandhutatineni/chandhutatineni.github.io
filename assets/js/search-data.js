@@ -38,6 +38,17 @@ ninja.data = [{
             window.location.href = "/blog/2025/VAEs/";
           
         },
+      },{id: "post-analysis-of-privacy-preserving-machine-learning-in-the-age-of-sensitive-data",
+        
+          title: "Analysis of Privacy-Preserving Machine Learning in the Age of Sensitive Data",
+        
+        description: "Training models on Sensitive data, approaches, tradeoffs, and recommendations.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2025/secure-training/";
+          
+        },
       },{id: "post-the-panoptic-enterprise-architectural-evolution-systemic-intelligence-and-the-digital-twin-of-the-organization",
         
           title: "The Panoptic Enterprise - Architectural Evolution, Systemic Intelligence, and the Digital Twin of...",
