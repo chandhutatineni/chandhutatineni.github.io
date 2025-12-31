@@ -60,35 +60,27 @@ $$
 
 #### **2.2.3 The Necessity of the $T^2$ Scaling Factor**
 
-A practical detail: applying Softmax with temperature reduces gradient magnitudes by $1/T$, so we multiply the distillation term by $T^2$ to preserve an appropriate learning signal.
+A critical implementation detail often missed in high-level summaries is the gradient scaling. If we simply apply the Softmax with high $T$, the gradients propagated back to the Student will be vanishingly small. We must scale the loss by $T^2$.
 
-Sketch of the scaling argument. For large $T$, expand $\exp(x) \approx 1 + x$. Then
+**Proof of Gradient Scaling:**
 
-$$
-q_i \approx \frac{1 + z_i/T}{N + \sum_j z_j/T}.
-$$
+Let us analyze the gradient of the Cross-Entropy loss with respect to the student's logit $z_i$ in the limit of high temperature ($T \to \infty$).  
+Using the Taylor expansion $\exp(x) \approx 1 + x$, the probability $q_i$ approximates to:
 
-Assuming zero-centered logits ($\sum_j z_j = 0$), this simplifies to
+$$q_i \approx \frac{1 + z_i/T}{N + \sum_j z_j/T}$$  
+Assuming zero-centered logits ($\sum z_j = 0$):
 
-$$
-q_i \approx \frac{1 + z_i/T}{N} = \frac{1}{N} + \frac{z_i}{NT}.
-$$
+$$q_i \approx \frac{1 + z_i/T}{N} = \frac{1}{N} + \frac{z_i}{NT}$$  
+The gradient of the loss $L$ with respect to $z_i$ is proportional to the error $(q_i - p_i)$. Substituting the approximation:
 
-The gradient of the Cross-Entropy with respect to $z_i$ is proportional to $(q_i - p_i)$, which gives
+$$\frac{\partial L}{\partial z_i} \approx \left( \frac{1}{N} + \frac{z_i^S}{NT} \right) - \left( \frac{1}{N} + \frac{z_i^T}{NT} \right) = \frac{1}{NT} (z_i^S - z_i^T)$$  
+This result demonstrates that the magnitude of the gradient scales as $1/T$. Since this gradient is backpropagated, and the updates to weights are proportional to the gradient, the effective learning signal scales as $1/T^2$. To ensure that the distillation loss provides a gradient signal comparable in magnitude to the standard hard-label Cross-Entropy loss (where $T=1$), we must multiply the distillation term by $T^2$.8
 
-$$
-\frac{\partial L}{\partial z_i} \approx \frac{1}{NT} (z_i^S - z_i^T).
-$$
+Final Loss Function Formulation:
 
-This shows a $1/T$ gradient scaling and hence an effective $1/T^2$ scaling in parameter updates, motivating the $T^2$ multiplier.
+$$L_{total} = (1 - \alpha) L_{CE}(y, q^S(1)) + \alpha T^2 L_{KL}(p^T(T), q^S(T))$$
 
-Final combined loss:
-
-$$
-L_{total} = (1 - \alpha)\, L_{CE}(y, q^S(1)) + \alpha\, T^2\, L_{KL}\big(p^T(T), q^S(T)\big),
-$$
-
-where $\alpha$ balances hard and soft losses.
+Where $\alpha$ balances the hard and soft losses.
 
 ### **2.3 Entropic Regularization: Renyi Entropy**
 
@@ -188,7 +180,7 @@ Small models struggle with arithmetic stability (e.g., multiplying large numbers
 
 **5. Addressing the Tokenizer Mismatch: Universal Distillation**
 
-One of the most technically challenging aspects of modern distillation arises when the Teacher and Student utilize different tokenizers. For example, distilling knowledge from **GPT-4** (cl100k_base tokenizer) to **Llama-3** (TikToken) or **Qwen-2** (specialized multilingual tokenizer) presents a fundamental mismatch. Logit-based distillation requires the output vectors $z^T$ and $z^S$ to share the same dimensionality ($|V_T| = |V_S|$). When vocabularies differ, a direct KL divergence calculation is impossible.
+One of the most technically challenging aspects of modern distillation arises when the Teacher and Student utilize different tokenizers. For example, distilling knowledge from **GPT-4** (cl100k_base tokenizer) to **Llama-3** (TikToken) or **Qwen-2** (specialized multilingual tokenizer) presents a fundamental mismatch. Logit-based distillation requires the output vectors $z^T$ and $z^S$ to share the same dimensionality ($ \mod V_T \mod = \mod V_S \mod $). When vocabularies differ, a direct KL divergence calculation is impossible.
 
 ### **5.1 The Naive Approach vs. Approximate Likelihood Matching (ALM)**
 
