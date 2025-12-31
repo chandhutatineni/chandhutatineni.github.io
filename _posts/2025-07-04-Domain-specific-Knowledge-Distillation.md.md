@@ -180,7 +180,7 @@ Small models struggle with arithmetic stability (e.g., multiplying large numbers
 
 **5. Addressing the Tokenizer Mismatch: Universal Distillation**
 
-One of the most technically challenging aspects of modern distillation arises when the Teacher and Student utilize different tokenizers. For example, distilling knowledge from **GPT-4** (cl100k_base tokenizer) to **Llama-3** (TikToken) or **Qwen-2** (specialized multilingual tokenizer) presents a fundamental mismatch. Logit-based distillation requires the output vectors $z^T$ and $z^S$ to share the same dimensionality ($ \mod V_T \mod = \mod V_S \mod $). When vocabularies differ, a direct KL divergence calculation is impossible.
+One of the most technically challenging aspects of modern distillation arises when the Teacher and Student utilize different tokenizers. For example, distilling knowledge from **GPT-4** (cl100k_base tokenizer) to **Llama-3** (TikToken) or **Qwen-2** (specialized multilingual tokenizer) presents a fundamental mismatch. Logit-based distillation requires the output vectors $z^T$ and $z^S$ to share the same dimensionality ($|V_T| = |V_S|$). When vocabularies differ, a direct KL divergence calculation is impossible.
 
 ### **5.1 The Naive Approach vs. Approximate Likelihood Matching (ALM)**
 
