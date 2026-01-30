@@ -71,6 +71,17 @@ ninja.data = [{
             window.location.href = "/blog/2025/Domain-specific-Knowledge-Distillation.md/";
           
         },
+      },{id: "post-architecting-grap-rag-for-enterprise",
+        
+          title: "Architecting Grap Rag for Enterprise",
+        
+        description: "Architecting Graph Retrieval-Augmented Generation for Billion-Scale Knowledge Bases - Challenges, Solutions, and Future Trajectories",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2025/graph-rag/";
+          
+        },
       },{id: "books-the-godfather",
           title: 'The Godfather',
           description: "",
