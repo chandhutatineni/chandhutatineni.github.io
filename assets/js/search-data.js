@@ -27,6 +27,17 @@ ninja.data = [{
             window.location.href = "/blog/2025/deep-generative-models/";
           
         },
+      },{id: "post-threshold-ecdsa-protocols-evolution-security-models-and-operational-implementation",
+        
+          title: "Threshold ECDSA Protocols - Evolution, Security Models, and Operational Implementation",
+        
+        description: "Analysis of various MPC protocols",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2025/MPC-Protocols/";
+          
+        },
       },{id: "post-deep-generative-modeling-variational-autoencoders-and-beyond",
         
           title: "Deep Generative Modeling - Variational Autoencoders and Beyond",
