@@ -105,6 +105,77 @@ The signing equation requires two **non-linear operations** on these shares that
 
 To solve this, the protocols utilize **Additively Homomorphic Encryption (AHE)**—specifically Paillier encryption—to perform operations on encrypted data in a way that parties can compute the product $k \cdot x$ on their shares without revealing the actual values to each other.
 
+### 2.1.5 Why EdDSA/Schnorr Signatures Are Fundamentally Simpler Than ECDSA
+
+At this point, a natural question arises: **Why do we focus on threshold ECDSA when the introduction mentions that EdDSA and Schnorr signatures are "relatively straightforward"?**
+
+The answer lies in the **linearity of the signing equation**.
+
+**EdDSA/Schnorr Signing Equation (Linear):**
+
+EdDSA and Schnorr signatures use a fundamentally different signing equation:
+$$s = k + H(R \parallel m) \cdot x \pmod n$$
+
+where:
+- $k$ is the ephemeral nonce
+- $H(R \parallel m)$ is a hash of the message and nonce
+- $x$ is the private key
+- The signature is $(R, s)$
+
+**Why This is Linear:**
+
+This equation is a **sum of two products**, both of which can be computed separately:
+- **Nonce part:** $k$ (shared additively among parties)
+- **Key part:** $H(R \parallel m) \cdot x$ (also shared additively—the hash is public, so it can be multiplied by individual key shares)
+
+In threshold EdDSA:
+$$s = \sum_{i=1}^{n} k_i + H(R \parallel m) \sum_{i=1}^{n} x_i \pmod n$$
+
+Since both terms are just sums of individual shares multiplied by public values (hash), there's **no need for homomorphic encryption or MtA protocols**. Each party can compute their contribution independently:
+$$s_i = k_i + H(R \parallel m) \cdot x_i$$
+
+Then sum: $s = \sum s_i$.
+
+**ECDSA's Non-Linearity Problem:**
+
+By contrast, ECDSA requires computing:
+$$s = k^{-1} (H(m) + r \cdot x) \pmod n$$
+
+Here's why this is fundamentally harder:
+1. **Modular Inversion:** $k^{-1}$ cannot be computed from shares of $k$ (non-linear operation)
+2. **Product of Shares:** $r \cdot x$ is a product of two shared secrets (also non-linear)
+
+These non-linear operations force the use of:
+- Homomorphic encryption (Paillier) to compute products
+- Distributed inversion protocols (more complex than EdDSA)
+- MtA exchanges (additional communication rounds)
+
+**Practical Comparison:**
+
+| Aspect | EdDSA/Schnorr | ECDSA |
+|--------|----------------|-------|
+| **Signing Equation** | $s = k + H \cdot x$ (linear) | $s = k^{-1}(H + r \cdot x)$ (non-linear) |
+| **Threshold Complexity** | ~2-3 rounds (no MtA needed) | ~4-9 rounds (requires MtA) |
+| **Cryptographic Machinery** | Simple polynomial sharing | Homomorphic encryption + ZK proofs |
+| **Computational Cost per Sign** | ~10-100ms (linear operations) | ~200-500ms (expensive Paillier ops) |
+| **Protocol Latency** | <1 second typical | 1-10 seconds (GG18/GG20) |
+| **Blockchain Adoption** | Emerging (Solana, Cardano) | Dominant (Bitcoin, Ethereum) |
+
+**Why We Focus on ECDSA Despite EdDSA Being Simpler:**
+
+1. **Bitcoin and Ethereum Use ECDSA (secp256k1):** The vast majority of institutional digital asset custody requires Bitcoin and Ethereum compatibility. EdDSA is not natively supported on these blockchains without additional translation protocols.
+
+2. **ECDSA is the "Harder Problem":** The mathematical complexity of threshold ECDSA makes it the more interesting research direction. Breaking through ECDSA's challenges directly enabled improvements in other areas of cryptography.
+
+3. **EdDSA Protocols Are Emerging:** FROST (Flexible Round-Optimized Schnorr Threshold signatures, RFC 8439) is the threshold EdDSA standard, and we discuss it in Section 9.5. However, it's less deployed in production custody systems than GG18/GG20.
+
+4. **ECDSA Solutions Apply More Broadly:** The homomorphic encryption techniques developed for ECDSA (Paillier, MtA, ZK proofs) have applications beyond signatures—they enable secure computation for other cryptographic problems.
+
+**When to Use Each:**
+
+- **Use EdDSA/FROST:** For new systems on blockchains that natively support EdDSA (Solana, Cardano, Monero). Simpler to implement, faster signing, smaller proof overhead.
+- **Use ECDSA/GG18:** For Bitcoin and Ethereum custody. Backward-compatible with existing single-signature verification. Required for institutional deployments.
+
 ### 2.2 Paillier Homomorphic Encryption
 
 The Paillier cryptosystem, invented by Pascal Paillier in 1999, is a probabilistic asymmetric algorithm for public-key cryptography. Unlike standard encryption schemes (which typically only allow decryption and not computation on encrypted data), Paillier allows **computation directly on encrypted data without decryption**—a property crucial for MPC.
@@ -307,11 +378,145 @@ The limitations of Shamir's scheme motivated the development of GG18, which intr
 
 The insight was that threshold cryptography could be made practical only by moving away from polynomial reconstruction and toward interactive MPC, where parties collaborate without ever exposing the key.
 
-## 4. GG18: The Foundational Protocol
+## 4. Paillier Homomorphic Encryption: Enabling Threshold ECDSA
+
+Now that we understand Shamir's fundamental limitations—particularly the expensive reconstruction (500-800ms per signature) and the need to reconstruct the key in the clear—we can appreciate why Paillier homomorphic encryption was the breakthrough that enabled practical threshold ECDSA.
+
+The key insight: instead of reconstructing the key to sign, can we compute the signature without ever exposing the key? This is where Paillier enters.
+
+### 4.1 Paillier Overview and Intuition
+
+The Paillier cryptosystem, invented by Pascal Paillier in 1999, is a probabilistic asymmetric algorithm for public-key cryptography. Unlike standard encryption schemes (which typically only allow decryption and not computation on encrypted data), Paillier allows **computation directly on encrypted data without decryption**—a property crucial for MPC.
+
+**Intuition: Why Homomorphic Encryption Matters**
+
+Normally, encryption is like locking information in a box:
+- You can lock it (encryption)
+- Only the key holder can unlock it (decryption)
+- But you **cannot do arithmetic inside the locked box**
+
+Homomorphic encryption is special: you **can perform arithmetic on locked (encrypted) values** without ever unlocking them. The result is an encrypted answer that, when decrypted, gives the correct arithmetic result.
+
+**Example:** If Alice encrypts 5 and Bob encrypts 3:
+- Standard encryption: Only the owner can decrypt; Bob can't know that Alice has 5
+- Paillier homomorphic: Bob can encrypt something with Alice's public key, add the encrypted 5 to his encrypted 3, and send back an encrypted 8. When Alice decrypts, she gets 8 (the correct sum) without Bob ever seeing 5 or learning the private key.
+
+**Mathematical Foundation:**
+
+Paillier uses two large prime numbers to create the cryptographic structure:
+
+- **Key Generation:** 
+  - Select two large primes $p, q$ (typically 1024-2048 bits each)
+  - Compute $N = pq$ (the public key; this becomes publicly known)
+  - Compute $\lambda(N) = \text{lcm}(p-1, q-1)$ (the private key; known only to the key holder)
+  - The security rests on the difficulty of factoring $N$ (knowing $N$ but not $p, q$ is hard)
+
+- **Encryption:** To encrypt a message $m$ (any number less than $N$):
+  - Select random $r \in \mathbb{Z}_N^*$ (a random number coprime to $N$)
+  - Compute ciphertext: $c = g^m \cdot r^N \pmod{N^2}$
+  - The randomness $r$ is essential: encrypting the same message twice gives different ciphertexts (probabilistic encryption)
+  - This makes the encryption semantically secure (an attacker cannot tell if two ciphertexts encrypt the same message)
+
+- **Decryption:** Using the private key $\lambda(N)$:
+  - Compute $m = D(c)$ using a specific formula involving $\lambda$ and the ciphertext
+  - Only the holder of $\lambda$ can decrypt; without it, the computation is infeasible
+  - The decryption is deterministic: the same ciphertext always decrypts to the same plaintext
+
+**Why Paillier is Additive (and Multiplicative with Scalars):**
+
+The magic of Paillier comes from its algebraic structure. Two encrypted values can be added in the ciphertext domain:
+
+- **Addition of Ciphertexts:** If $c_1 = E(m_1)$ and $c_2 = E(m_2)$, then:
+  $$E(m_1) \cdot E(m_2) \pmod{N^2} = E(m_1 + m_2)$$
+  Multiply the two ciphertexts, decrypt, and you get the sum of the two messages!
+
+- **Scalar Multiplication:** If $c = E(m)$ and $k$ is a known scalar (not encrypted):
+  $$E(m)^k \pmod{N^2} = E(k \cdot m)$$
+  Raise the ciphertext to the power of $k$, decrypt, and you get the product!
+
+**Example (Concrete Numbers):**
+Let's say Alice encrypts 7 and Bob encrypts 3 with Paillier:
+- $E_A(7) = c_1$ (some large encrypted value)
+- $E_A(3) = c_2$ (some other encrypted value)
+- Compute: $c_1 \cdot c_2 \pmod{N^2} = E_A(7 + 3) = E_A(10)$
+- When Alice decrypts: she gets 10 (the sum!)
+- Bob never saw 7 or the private key; he just did multiplication in the ciphertext domain
+
+**Security Assumption:**
+
+Paillier's security rests on the **Decisional Composite Residuosity Assumption (DCRA)**:
+
+Given $N$ and a random number $z \in \mathbb{Z}_{N^2}^*$, it is computationally infeasible to determine whether $z$ is a Paillier encryption of 0 or some random non-zero value. This is an **assumption** (unproven conjecture) like the discrete logarithm problem, but believed to be hard based on decades of research.
+
+**Practical Characteristics:**
+
+- **Ciphertext Expansion:** A $k$-bit plaintext expands to $2k$ bits when encrypted (e.g., a 256-bit secret becomes 512-bit encrypted). This overhead is acceptable for MPC because we're not dealing with massive data.
+- **Computational Cost:** 
+  - Encryption is $O(k^3)$ (expensive due to modular exponentiation with large numbers)
+  - Homomorphic operations are also $O(k^3)$ (similarly expensive)
+  - Decryption is $O(k^3)$
+  - These are expensive compared to symmetric encryption, but manageable for threshold signature signing (which happens once per transaction)
+- **Parallelizability:** The modular exponentiations can be parallelized, so modern systems can handle ~10-20ms per Paillier operation
+
+**Why Paillier for Threshold ECDSA?**
+
+Compare to Shamir's 500-800ms reconstruction overhead: Paillier's ~10-20ms per operation is acceptable. The key advantage is the scalar multiplication property ($E(m)^k = E(k \cdot m)$) which is exactly what we need to solve the multiplication problem in threshold ECDSA without exposing keys:
+
+- Alice has secret $a$ and can encrypt it with Paillier
+- Bob has secret $b$ (not encrypted)
+- Bob can compute $E(a)^b = E(a \cdot b)$ without ever learning $a$
+- Alice can decrypt and get $a \cdot b$
+- This is the core of the **Multiplicative-to-Additive (MtA) protocol** that appears in all threshold ECDSA schemes
+
+### 4.2 The Multiplicative-to-Additive (MtA) Protocol
+
+The MtA protocol is the "engine" of threshold ECDSA. It allows two parties, Alice (holding secret $a$) and Bob (holding secret $b$), to compute additive shares $\alpha$ and $\beta$ such that $\alpha + \beta = a \cdot b$.
+
+**Protocol Flow:**
+
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/mpc/2.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+    </div>
+</div>
+
+**The Protocol Steps in Detail:**
+
+1. **Encryption:** Alice generates a Paillier key pair $(N, p, q)$ where the public key is $N$ and private key is the factorization. She encrypts her secret $a$ and sends $c_A = E_A(a)$ to Bob. Importantly, Alice does **not** reveal the Paillier modulus's factorization or any information that would allow Bob to decrypt.
+
+2. **Homomorphic Computation:** Bob receives $c_A$ and performs homomorphic operations:
+   - He selects a random blinding value $\beta \in [0, 2^{\ell}]$ where $\ell$ is a security parameter (typically 256+ bits)
+   - Using Paillier's scalar multiplication property: $c_B = c_A^b \pmod{N^2}$ computes the encryption of $a \cdot b$
+   - He then adds encryption of his blinding factor: $c_B' = c_B \otimes E_A(\beta)$, resulting in $E_A(ab + \beta)$
+   - The blinding factor is critical: without it, Alice would learn $ab$ upon decryption
+   - Bob sends $c_B'$ back to Alice
+
+3. **Decryption:** Alice decrypts using her private key:
+   - She computes $\alpha' = D_A(c_B') = ab + \beta \pmod{n}$ (where $n$ is the ECDSA curve order)
+   - She adjusts: $\alpha = -\alpha' \pmod{n}$ (the sign depends on the signing equation variant)
+   - Alice now holds her share $\alpha$
+
+4. **Result:** Alice has $\alpha = -(ab + \beta)$, Bob has $\beta$
+   - Addition: $\alpha + \beta = -(ab + \beta) + \beta = -ab \pmod{n}$
+   - The product is shared in the form needed for the signing equation: $ab$ is decomposed into two shares that only reveal the product when summed
+
+5. **Security via Zero-Knowledge Proofs:** This exchange must be protected with rigorous ZKPs:
+   - **Range Proof (Alice):** Proves that her encrypted value $a$ is within a valid range $[0, q^3]$ (where $q$ is the curve order). This prevents overflow attacks where an attacker sends a value $> q$ that wraps around modulo $N$
+   - **Correctness Proof (Bob):** Proves that Bob correctly computed the homomorphic multiplication and that his blinding factor $\beta$ is within valid bounds
+   - **Modulus Proof (Alice):** At key generation time, Alice proves that her Paillier modulus $N$ is a product of exactly two safe primes (no small factors that weaken the encryption)
+
+The failure to rigorously enforce these proofs was the source of the devastating Alpha-Rays and 6ix1een attacks, discussed later in Section 9.[1, 3]
+
+**Computational Complexity:**
+- Alice's cost: 1 Paillier encryption ($O(k^3)$ where $k = 2048$), 1 decryption ($O(k^3)$), ZK proof computation (~1-2ms)
+- Bob's cost: 1 Paillier homomorphic operation ($O(k^3)$), 1 Paillier addition ($O(k^2)$), ZK proof (~1-2ms)
+- Total per MtA invocation: **~10-20ms** per party (dominant cost in GG18/GG20 signing)
+
+## 5. GG18: The Foundational Protocol
 
 GG18 (Gennaro & Goldfeder, 2018) represented a watershed moment in threshold cryptography. It was the first efficient, constant-round protocol for threshold ECDSA that did not require a trusted dealer during key generation, making it suitable for permissionless blockchain applications.
 
-### 4.1 Protocol Architecture and Security Model
+### 5.1 Protocol Architecture and Security Model
 
 GG18 operates within a rigorous cryptographic framework designed to enable trustless threshold signing:
 
@@ -334,7 +539,7 @@ GG18 operates within a rigorous cryptographic framework designed to enable trust
 - **Key Generation:** O(n²) communication, ~10-30 seconds for n=5 parties
 - **Signing:** 9 rounds total, ~8-10 seconds latency for n=5 parties, t=2
 
-### 4.2 Distributed Key Generation (DKG)
+### 5.2 Distributed Key Generation (DKG)
 
 The GG18 KeyGen phase replaces the need for a trusted dealer by combining Feldman's Verifiable Secret Sharing (VSS) with commitment schemes.
 
@@ -408,7 +613,7 @@ The Feldman verification values $V_{i,k} = a_{i,k} \cdot G$ serve a dual purpose
 
 The total data published for DKG: ~n × (t+1) elliptic curve points + n × 2048-bit Paillier moduli ≈ **20-50KB for n=10, t=3**
 
-### 4.3 The Signing Protocol (9 Rounds)
+### 5.3 The Signing Protocol (9 Rounds)
 
 The signing protocol transforms the additive shares of $x$ into a valid signature $(r, s)$ without reconstructing $x$.
 
@@ -453,7 +658,7 @@ The protocol flows left-to-right across three logical phases:
 
 - **Verification:** Each party locally checks if $(r, s)$ verifies against the public key $Q$.
 
-### 4.4 Limitations of GG18
+### 5.4 Limitations of GG18
 
 While functional, GG18 suffered from two major operational drawbacks:
 
@@ -461,11 +666,11 @@ While functional, GG18 suffered from two major operational drawbacks:
 
 - **Range Proof Vulnerability:** The original paper's specifications for the ZK Range Proofs in the MtA step were insufficient. They did not enforce strict enough bounds, allowing for the "Alpha-Rays" attack where attackers could extract private key bits via modular overflow (see Section 8).[3]
 
-## 5. GG20: Identifiable Abort and Optimization
+## 6. GG20: Identifiable Abort and Optimization
 
 GG20 (Gennaro & Goldfeder, 2020) was a direct response to the limitations of GG18. It introduced the concept of Identifiable Abort—the ability to deanonymize a cheater upon protocol failure—and optimized the online phase of signing.
 
-### 5.1 The "Identifiable Abort" Mechanism
+### 6.1 The "Identifiable Abort" Mechanism
 
 The core innovation of GG20 is the "Blame Phase." In MPC, identifying a cheater usually requires revealing the secret inputs to check correctness, which defeats the purpose of the protocol. GG20 circumvents this by using an Optimistic Execution model combined with **Commitment Consistency Verification**.
 
@@ -516,7 +721,7 @@ When the final signature $(r, s)$ fails verification, parties enter the Blame Ph
 
 **Attribution:** The cheater is identified as the party whose revealed values do not mathematically align with their commitments or the ZK proofs provided. This mechanism acts as a strong deterrent against malicious DoS attacks.[4]
 
-### 5.2 Protocol Restructuring: Offline vs. Online
+### 6.2 Protocol Restructuring: Offline vs. Online
 
 GG20 optimized the user experience by splitting the signing process into Offline (Preprocessing) and Online phases.
 
@@ -557,15 +762,15 @@ When the message $m$ is received (e.g., a user clicks "Send" in a wallet), parti
 
 **Impact:** This reduced the effective latency for the user from ~9 round-trips to 1 round-trip, significantly improving the responsiveness of MPC wallets.[2, 5]
 
-### 5.3 Mitigation of Paillier Attacks
+### 6.3 Mitigation of Paillier Attacks
 
 GG20 introduced stricter ZK Range Proofs for the MtA phase. Specifically, it required proofs that the encrypted values were small enough to avoid wrapping around the modulus $N$. However, the complexity of implementing these proofs correctly still left room for implementation errors, leading to the eventual development of CGGMP21.
 
-## 6. CGGMP21: Universal Composability and Proactive Security
+## 7. CGGMP21: Universal Composability and Proactive Security
 
 CGGMP21 (Canetti, Gennaro, Goldfeder, Makriyannis, Peled 2021) represents the maturation of threshold ECDSA into a rigorously provable standard. While GG18 and GG20 were secure in standalone models, real-world wallets run multiple concurrent signing sessions, often interleaved with key generation or key refreshes. This concurrency opens up subtle attack vectors not covered by static security models.
 
-### 6.1 Universal Composability (UC)
+### 7.1 Universal Composability (UC)
 
 CGGMP21 is the first threshold ECDSA protocol proven secure in the UC Framework.
 
@@ -575,7 +780,7 @@ CGGMP21 is the first threshold ECDSA protocol proven secure in the UC Framework.
 
 - **Adaptive Security:** The protocol handles adaptive adversaries, meaning the attacker can choose which parties to corrupt during the execution of the protocol, rather than having to decide beforehand. This models real-world intrusions more accurately.[6, 7]
 
-### 6.2 Key Refresh and Proactive Security
+### 7.2 Key Refresh and Proactive Security
 
 One of the most significant operational additions in CGGMP21 is a native Key Refresh Protocol.
 
@@ -615,7 +820,7 @@ The old shares $x_i$ become useless. To compromise the key, an attacker must com
 | Long-term institutional security (5+ years) | ❌ Accumulating breach risk | ✅ Breach window limited to refresh cycle |
 | Compliance with key rotation mandates | ❌ Manual, error-prone | ✅ Automatic, enforced by protocol |
 
-### 6.3 4-Round Architecture
+### 7.3 4-Round Architecture
 
 CGGMP21 further optimizes the round complexity.
 
@@ -625,11 +830,11 @@ CGGMP21 further optimizes the round complexity.
 
 - **Cheap Accountability:** Unlike GG20, which required a heavy "Blame Phase" post-failure, CGGMP21 integrates verification steps into the preprocessing. If a party cheats during the MtA phase, they are detected before the online phase begins. This avoids the need to store massive transcripts for potential blame assignment, reducing storage overhead.[7]
 
-## 7. MPC-CMP: Industrial Optimization and Cold Storage
+## 8. MPC-CMP: Industrial Optimization and Cold Storage
 
 MPC-CMP is a protocol developed by the Fireblocks cryptography team (Canetti, Makriyannis, Peled) that builds upon the theoretical foundations of CGGMP21 but optimizes specifically for the constraints of high-frequency trading and cold storage security.
 
-### 7.1 The 1-Round Signing Breakthrough
+### 8.1 The 1-Round Signing Breakthrough
 
 While GG20 and CGGMP21 support a 1-round online phase, MPC-CMP is architected to treat the preprocessing phase as a continuous background process.
 
@@ -639,7 +844,7 @@ While GG20 and CGGMP21 support a 1-round online phase, MPC-CMP is architected to
 
 - **Performance:** This architecture allows for signing speeds up to 800% faster than GG18. The perceived latency for the user is just the network propagation time of a single packet.[8]
 
-### 7.2 Enabling Air-Gapped MPC (Cold Storage)
+### 8.2 Enabling Air-Gapped MPC (Cold Storage)
 
 Historically, MPC was considered incompatible with "Cold Storage" (offline devices) because of the requirement for multiple rounds of interactive communication (the "chattiness" of the MtA protocol). Connecting a cold device to a network to perform 9 rounds of handshake defeats the purpose of air-gapping.
 
@@ -688,11 +893,11 @@ The ability to perform threshold signing without network connectivity to the col
 
 This workflow makes MPC viable for regulatory environments that mandate cold storage, previously the domain of MultiSig or physical HSMs.[9, 8]
 
-## 8. DHSMPC & nQSMax: Directed Computation and Post-Quantum Security (2025-2026)
+## 9. DHSMPC & nQSMax: Directed Computation and Post-Quantum Security (2025-2026)
 
 As institutional adoption of MPC protocols accelerates, two critical limitations of MPC-CMP have emerged: signature-only output constraints and vulnerability to quantum threats. DHSMPC (Directed Hidden State Multi-Party Computation) and nQSMax (its quantum-safe variant) address these limitations by enabling arbitrary computational graphs and post-quantum cryptographic foundations.
 
-### 8.1 Four Limitations of MPC-CMP That Drive DHSMPC Development
+### 9.1 Four Limitations of MPC-CMP That Drive DHSMPC Development
 
 1. **Signature-Only Output:** MPC-CMP is architecturally designed for threshold ECDSA signing only. It cannot compute arbitrary functions. This restricts use to traditional custody and payment scenarios, missing emerging opportunities in:
    - Federated machine learning (hospitals sharing diagnostic models without exposing patient data)
@@ -705,7 +910,7 @@ As institutional adoption of MPC protocols accelerates, two critical limitations
 
 4. **No Quantum Resistance:** ECDSA and all current threshold protocols rely on integer factorization and discrete logarithm hardness. Cryptographically Relevant Quantum Computers (CRQCs) could factor 2048-bit RSA moduli in ~8 hours by 2030-2040. An attacker using "harvest now, decrypt later" attacks could collect today's transactions and decrypt them post-quantum.
 
-### 8.2 DHSMPC: Hidden State, Directed Execution, and Variable-Round Optimization
+### 9.2 DHSMPC: Hidden State, Directed Execution, and Variable-Round Optimization
 
 DHSMPC extends MPC beyond key management to arbitrary stateful computation via three core innovations:
 
@@ -787,7 +992,7 @@ where $C$ is a small constant overhead (~1-2 rounds) for setup and aggregation. 
 | Deep neural network (50 layers sequential) | 4 | 6-8 | -50% (longer due to depth) |
 | Auction winner determination (n parties, n comparisons) | 4 | 3-4 | 0-25% |
 
-### 8.3 nQSMax: Quantum-Safe Variant
+### 9.3 nQSMax: Quantum-Safe Variant
 
 nQSMax replaces classical cryptographic hardness assumptions with lattice-based cryptography (Learning With Errors, LWE), which remains hard against quantum computers.
 
@@ -818,7 +1023,7 @@ nQSMax replaces classical cryptographic hardness assumptions with lattice-based 
 - Dilithium signature: 2420 bytes (vs. ECDSA: 64 bytes)
 - Total protocol size increase: ~3x (acceptable given quantum resilience)
 
-### 8.4 Empirical Characteristics and Use Cases
+### 9.4 Empirical Characteristics and Use Cases
 
 **Performance Comparison (7-Protocol Matrix):**
 
@@ -858,7 +1063,7 @@ nQSMax replaces classical cryptographic hardness assumptions with lattice-based 
    - 2035+: Pure Dilithium via nQSMax
    - Migration path: Gradual, not disruptive (can coexist for 5+ years)
 
-### 8.5 Connection to FROST and Future Directions
+### 9.5 Connection to FROST and Future Directions
 
 While DHSMPC enables arbitrary computation, FROST (Flexible Round-Optimized Schnorr Threshold) offers an important complementary approach for blockchains supporting Schnorr signatures.
 
@@ -874,11 +1079,11 @@ While DHSMPC enables arbitrary computation, FROST (Flexible Round-Optimized Schn
 - DHSMPC: Variable rounds (2-6) but arbitrary computation + AI/ML support
 - FROST + DHSMPC: Hybrid approach where FROST handles key management, DHSMPC handles computation if needed
 
-## 9. Vulnerability Analysis: The Paillier Modulus Attacks
+## 10. Vulnerability Analysis: The Paillier Modulus Attacks
 
 The progression from GG18 to CGGMP21 was significantly accelerated by the discovery of critical vulnerabilities in how the Paillier encryption scheme was implemented in the MtA phase. These attacks—Alpha-Rays and 6ix1een—demonstrated that theoretical security does not always translate to implementation security.
 
-### 9.1 The Mechanism of the Attack
+### 10.1 The Mechanism of the Attack
 
 In the MtA phase, Alice sends $c = E_A(a)$ to Bob. Bob computes $c' = c^b \cdot E(\beta) = E(a \cdot b + \beta)$ and returns it.
 The security relies on Bob adding enough "noise" ($\beta$) to mask the product $a \cdot b$. Furthermore, all operations happen modulo $N$ (Alice's Paillier modulus).
@@ -891,7 +1096,7 @@ The attacks exploit modular overflow and malformed moduli:
 
 - **Extraction:** By interacting with the victim (Bob) multiple times—roughly 16 signatures for the "6ix1een" attack—Alice can use the Chinese Remainder Theorem (CRT) to extract bits of Bob's secret $b$ from the residues of the modular overflows. Eventually, Alice reconstructs Bob's full private key share.[2, 3]
 
-### 9.2 Mitigation via Zero-Knowledge Proofs
+### 10.2 Mitigation via Zero-Knowledge Proofs
 
 Protocol updates (patched GG18, GG20, and native CGGMP21) introduced mandatory, rigorous ZK proofs to counter this:
 
