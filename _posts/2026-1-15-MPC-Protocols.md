@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Threshold ECDSA Protocols - Evolution, Security Models, and Operational Implementation
+title: Secure Multi Party Computation Protocols - Evolution, Security Models, and Operational Implementation
 date: 2025-08-10
 description: Analysis of various MPC protocols
 tags: EA
