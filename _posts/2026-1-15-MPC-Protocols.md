@@ -17,7 +17,7 @@ This operational landscape drove the development of Threshold Signature Schemes 
 
 While threshold schemes for Schnorr signatures (and by extension, EdDSA) are relatively straightforward due to the linearity of the signing equation ($s = k + ex$), the Elliptic Curve Digital Signature Algorithm (ECDSA)—the standard for Bitcoin and Ethereum—presents a formidable mathematical challenge. ECDSA signing requires the computation of the modular inverse of a secret ephemeral nonce, $k^{-1}$, and the multiplication of two secret values, $k \cdot x$. In a distributed setting, performing these non-linear operations on secret shares without revealing the underlying values requires complex cryptographic machinery.
 
-This report provides a comprehensive technical analysis spanning the complete evolution of threshold signature schemes: from Shamir's Secret Sharing (the foundational academic baseline), through the modern MPC era with GG18 (Gennaro & Goldfeder 2018), GG20 (Gennaro & Goldfeder 2020), CGGMP21 (Canetti et al. 2021), and MPC-CMP (Fireblocks/CMP), to emerging 2025-2026 protocols including DHSMPC/nQSMax and FROST. We dissect their cryptographic primitives, round-by-round signing mechanics, security models (from static to adaptive adversaries), the critical vulnerabilities—such as the Paillier modulus attacks—that drove their evolution, and the emerging quantum-safe directions. Furthermore, we analyze the integration of these software protocols with hardware-based Trusted Execution Environments (TEEs) and their application in broader privacy-preserving domains like Federated Learning and AI/ML systems.
+This artcile provides a comprehensive technical analysis spanning the complete evolution of threshold signature schemes: from Shamir's Secret Sharing (the foundational academic baseline), through the modern MPC era with GG18 (Gennaro & Goldfeder 2018), GG20 (Gennaro & Goldfeder 2020), CGGMP21 (Canetti et al. 2021), and MPC-CMP (Fireblocks/CMP), to emerging 2025-2026 protocols including DHSMPC/nQSMax and FROST. We dissect their cryptographic primitives, round-by-round signing mechanics, security models (from static to adaptive adversaries), the critical vulnerabilities—such as the Paillier modulus attacks—that drove their evolution, and the emerging quantum-safe directions. Furthermore, we analyze the integration of these software protocols with hardware-based Trusted Execution Environments (TEEs) and their application in broader privacy-preserving domains like Federated Learning and AI/ML systems.
 
 **Protocol Evolution Timeline:**
 
@@ -31,46 +31,162 @@ This report provides a comprehensive technical analysis spanning the complete ev
 
 To understand the architectural distinctions between GG18, GG20, and CGGMP21, one must first master the underlying cryptographic primitives that enable the distributed computation of ECDSA signatures. The core difficulty lies in the Multiplicative-to-Additive (MtA) conversion, a sub-protocol used in all four schemes to transform multiplicative shares of a secret into additive shares without revealing the secret itself.
 
+### 2.0 Background: ECDSA in the Standard (Non-Threshold) Case
+
+Before discussing threshold ECDSA, it's essential to understand how ECDSA works in its standard form, used by Bitcoin and Ethereum for all transaction signatures.
+
+**What is ECDSA?**
+
+ECDSA (Elliptic Curve Digital Signature Algorithm) is the cryptographic standard for asymmetric digital signatures on elliptic curves. Unlike RSA (which uses large prime factorization), ECDSA relies on the mathematical difficulty of the **Elliptic Curve Discrete Logarithm Problem (ECDLP)**: given a point $Q$ on the curve and a generator point $G$, it's computationally infeasible to find the scalar $x$ such that $Q = x \cdot G$.
+
+**Key Components:**
+- **Private Key:** A scalar $x$ (256-bit number for Bitcoin/Ethereum, e.g., $x \in [1, n-1]$ where $n$ is the curve order)
+- **Public Key:** The curve point $Q = x \cdot G$ (computed from the private key; revealed to the world)
+- **Generator Point $G$:** A fixed point on the elliptic curve (standardized for each curve like secp256k1)
+- **Curve Order $n$:** The number of points on the curve (approximately $2^{256}$ for secp256k1)
+
+**Standard ECDSA Signing (Single Party):**
+
+When a single user wants to sign a message $m$:
+
+1. **Hash the Message:** $H(m)$ = cryptographic hash of the message (using SHA-256)
+2. **Generate Ephemeral Nonce:** Select a random secret nonce $k \in [1, n-1]$ (must be different for each signature)
+3. **Compute Curve Point:** $R = k \cdot G$ (scalar multiplication on the elliptic curve)
+4. **Extract x-coordinate:** $r = R_x \pmod n$ (use the x-coordinate of point $R$, reduced modulo $n$)
+5. **Compute Signature Component:** $s = k^{-1}(H(m) + r \cdot x) \pmod n$
+   - $k^{-1}$ is the modular multiplicative inverse (the value that when multiplied by $k$ gives 1 modulo $n$)
+   - This equation combines the message hash, the ephemeral nonce, and the private key
+
+6. **Return Signature:** $(r, s)$ is the final signature (64 bytes total: 32 for $r$, 32 for $s$)
+
+**Signature Verification (Anyone with Public Key):**
+
+Anyone can verify a signature without knowing the private key:
+
+$$Q \stackrel{?}{=} s^{-1}(H(m) \cdot G + r \cdot Q)$$
+
+If this equation holds, the signature is valid. This works because of the algebraic properties of elliptic curves and modular arithmetic.
+
+**Why ECDSA is Secure:**
+
+The security rests on the difficulty of the discrete logarithm problem. An attacker cannot forge a signature for a different message without knowing $x$ (the private key), because they would need to solve $x = ?$ given only $Q$ and $G$, which is computationally infeasible.
+
 ### 2.1 The ECDSA Threshold Challenge
 
-The ECDSA signature $(r, s)$ for a message $m$ using a private key $x$ and a random nonce $k$ is defined by:
+Now we move to the **threshold setting**, where the private key $x$ is not held by a single party but is split among $n$ parties. This creates a fundamental mathematical challenge.
 
-- **Curve Point:** $R = k \cdot G = (r_x, r_y)$
-- **Signature Component 1:** $r = r_x \pmod n$
-- **Signature Component 2:** $s = k^{-1} (H(m) + r \cdot x) \pmod n$
+**The Threshold Equation:**
 
-In a threshold setting ($t$-out-of-$n$), the private key $x$ is shared additively among participants: $x = \sum_{i=1}^{n} x_i$.
-Similarly, the ephemeral nonce $k$ is generated via distributed shares: $k = \sum_{i=1}^{n} k_i$.
+In threshold ECDSA, the signature equation must be computed on shares rather than on the key itself:
 
-The signing equation requires two operations that are difficult to perform on additive shares:
+- **Curve Point:** $R = k \cdot G = (r_x, r_y)$ where $k = \sum_{i=1}^{n} k_i$ (sum of all nonce shares)
+- **Signature Component 1:** $r = r_x \pmod n$ (extract x-coordinate as in standard ECDSA)
+- **Signature Component 2:** $s = k^{-1} (H(m) + r \cdot x) \pmod n$ where $x = \sum_{i=1}^{n} x_i$ (sum of all private key shares)
 
-- **Inversion:** Computing $k^{-1}$. Note that $(\sum k_i)^{-1} \neq \sum k_i^{-1}$.
-- **Multiplication:** Computing $k \cdot x$. Note that $(\sum k_i)(\sum x_i) \neq \sum (k_i \cdot x_i)$.
+**Why This is Hard:**
 
-To solve this, the protocols utilize Additively Homomorphic Encryption (AHE) to perform operations on encrypted data.
+In a threshold setting, the private key $x$ is shared additively among participants: $x = \sum_{i=1}^{n} x_i$ (each party $i$ holds only their share $x_i$, not the full key).
+
+Similarly, the ephemeral nonce $k$ is generated via distributed shares: $k = \sum_{i=1}^{n} k_i$ (each party generates part of the nonce).
+
+The signing equation requires two **non-linear operations** on these shares that cannot be done naively:
+
+1. **Inversion Problem:** Computing $k^{-1}$ from shares of $k$
+   - If we try $k^{-1} = \sum_{i=1}^{n} (k_i)^{-1}$, this is **WRONG**
+   - Mathematically: $(\sum k_i)^{-1} \neq \sum (k_i)^{-1}$ (modular inverse is non-linear)
+   - Example: If $k_1 = 2$ and $k_2 = 3$, then $(2+3)^{-1} \neq 2^{-1} + 3^{-1}$ in modular arithmetic
+
+2. **Multiplication Problem:** Computing $k \cdot x$ from their respective shares
+   - If we try $k \cdot x = \sum_{i=1}^{n} (k_i \cdot x_i)$, this is also **WRONG**
+   - Mathematically: $(\sum k_i)(\sum x_i) \neq \sum (k_i \cdot x_i)$ (product expands differently)
+   - Example: $(k_1 + k_2)(x_1 + x_2) = k_1 x_1 + k_1 x_2 + k_2 x_1 + k_2 x_2$ (cross terms!)
+
+**The Solution: Homomorphic Encryption**
+
+To solve this, the protocols utilize **Additively Homomorphic Encryption (AHE)**—specifically Paillier encryption—to perform operations on encrypted data in a way that parties can compute the product $k \cdot x$ on their shares without revealing the actual values to each other.
 
 ### 2.2 Paillier Homomorphic Encryption
 
-The Paillier cryptosystem, invented by Pascal Paillier in 1999, is a probabilistic asymmetric algorithm for public-key cryptography. Unlike standard encryption schemes, it allows computation directly on encrypted data without decryption—a property crucial for MPC.
+The Paillier cryptosystem, invented by Pascal Paillier in 1999, is a probabilistic asymmetric algorithm for public-key cryptography. Unlike standard encryption schemes (which typically only allow decryption and not computation on encrypted data), Paillier allows **computation directly on encrypted data without decryption**—a property crucial for MPC.
+
+**Intuition: Why Homomorphic Encryption Matters**
+
+Normally, encryption is like locking information in a box:
+- You can lock it (encryption)
+- Only the key holder can unlock it (decryption)
+- But you **cannot do arithmetic inside the locked box**
+
+Homomorphic encryption is special: you **can perform arithmetic on locked (encrypted) values** without ever unlocking them. The result is an encrypted answer that, when decrypted, gives the correct arithmetic result.
+
+**Example:** If Alice encrypts 5 and Bob encrypts 3:
+- Standard encryption: Only the owner can decrypt; Bob can't know that Alice has 5
+- Paillier homomorphic: Bob can encrypt something with Alice's public key, add the encrypted 5 to his encrypted 3, and send back an encrypted 8. When Alice decrypts, she gets 8 (the correct sum) without Bob ever seeing 5 or learning the private key.
 
 **Mathematical Foundation:**
-- **Key Generation:** Select two large primes $p, q$, compute $N = pq$. The public key is $N$; the private key is $\lambda(N) = \text{lcm}(p-1, q-1)$
-- **Encryption:** For plaintext $m$, compute ciphertext $c = g^m \cdot r^N \pmod{N^2}$ where $g, r$ are random values
-- **Decryption:** Using private key, recover $m$ from $c$
 
-**Homomorphic Properties:**
+Paillier uses two large prime numbers to create the cryptographic structure:
 
-The Paillier cryptosystem is the foundation of the MtA protocol used in GG18, GG20, and MPC-CMP. It allows for the following homomorphic operations:
+- **Key Generation:** 
+  - Select two large primes $p, q$ (typically 1024-2048 bits each)
+  - Compute $N = pq$ (the public key; this becomes publicly known)
+  - Compute $\lambda(N) = \text{lcm}(p-1, q-1)$ (the private key; known only to the key holder)
+  - The security rests on the difficulty of factoring $N$ (knowing $N$ but not $p, q$ is hard)
 
-- **Addition of Ciphertexts:** $D(E(a) \cdot E(b) \pmod {N^2}) = a + b \pmod N$
-- **Scalar Multiplication:** $D(E(a)^b \pmod {N^2}) = a \cdot b \pmod N$
+- **Encryption:** To encrypt a message $m$ (any number less than $N$):
+  - Select random $r \in \mathbb{Z}_N^*$ (a random number coprime to $N$)
+  - Compute ciphertext: $c = g^m \cdot r^N \pmod{N^2}$
+  - The randomness $r$ is essential: encrypting the same message twice gives different ciphertexts (probabilistic encryption)
+  - This makes the encryption semantically secure (an attacker cannot tell if two ciphertexts encrypt the same message)
 
-This allows a party to compute the encryption of a sum or a product involving a secret value without ever decrypting the inputs.[1, 2]
+- **Decryption:** Using the private key $\lambda(N)$:
+  - Compute $m = D(c)$ using a specific formula involving $\lambda$ and the ciphertext
+  - Only the holder of $\lambda$ can decrypt; without it, the computation is infeasible
+  - The decryption is deterministic: the same ciphertext always decrypts to the same plaintext
+
+**Why Paillier is Additive (and Multiplicative with Scalars):**
+
+The magic of Paillier comes from its algebraic structure. Two encrypted values can be added in the ciphertext domain:
+
+- **Addition of Ciphertexts:** If $c_1 = E(m_1)$ and $c_2 = E(m_2)$, then:
+  $$E(m_1) \cdot E(m_2) \pmod{N^2} = E(m_1 + m_2)$$
+  Multiply the two ciphertexts, decrypt, and you get the sum of the two messages!
+
+- **Scalar Multiplication:** If $c = E(m)$ and $k$ is a known scalar (not encrypted):
+  $$E(m)^k \pmod{N^2} = E(k \cdot m)$$
+  Raise the ciphertext to the power of $k$, decrypt, and you get the product!
+
+**Example (Concrete Numbers):**
+Let's say Alice encrypts 7 and Bob encrypts 3 with Paillier:
+- $E_A(7) = c_1$ (some large encrypted value)
+- $E_A(3) = c_2$ (some other encrypted value)
+- Compute: $c_1 \cdot c_2 \pmod{N^2} = E_A(7 + 3) = E_A(10)$
+- When Alice decrypts: she gets 10 (the sum!)
+- Bob never saw 7 or the private key; he just did multiplication in the ciphertext domain
 
 **Security Assumption:**
-- Semantic security rests on the Decisional Composite Residuosity Assumption (DCRA): Given $N$ and a random number $z \in \mathbb{Z}_{N^2}^*$, it is computationally infeasible to determine whether $z$ is a Paillier encryption of 0 or a random non-zero element
-- Ciphertext expansion: A $k$-bit plaintext expands to $2k$ bits when encrypted (overhead acceptable for most MPC applications)
-- Computational cost: Encryption is $O(k^3)$; homomorphic operations are $O(k^3)$ (expensive but parallelizable)
+
+Paillier's security rests on the **Decisional Composite Residuosity Assumption (DCRA)**:
+
+Given $N$ and a random number $z \in \mathbb{Z}_{N^2}^*$, it is computationally infeasible to determine whether $z$ is a Paillier encryption of 0 or some random non-zero value. This is an **assumption** (unproven conjecture) like the discrete logarithm problem, but believed to be hard based on decades of research.
+
+**Practical Characteristics:**
+
+- **Ciphertext Expansion:** A $k$-bit plaintext expands to $2k$ bits when encrypted (e.g., a 256-bit secret becomes 512-bit encrypted). This overhead is acceptable for MPC because we're not dealing with massive data.
+- **Computational Cost:** 
+  - Encryption is $O(k^3)$ (expensive due to modular exponentiation with large numbers)
+  - Homomorphic operations are also $O(k^3)$ (similarly expensive)
+  - Decryption is $O(k^3)$
+  - These are expensive compared to symmetric encryption, but manageable for threshold signature signing (which happens once per transaction)
+- **Parallelizability:** The modular exponentiations can be parallelized, so modern systems can handle ~10-20ms per Paillier operation
+
+**Why Paillier for Threshold ECDSA?**
+
+The scalar multiplication property ($E(m)^k = E(k \cdot m)$) is exactly what we need to solve the multiplication problem in threshold ECDSA:
+- Alice has secret $a$ and can encrypt it with Paillier
+- Bob has secret $b$ (not encrypted)
+- Bob can compute $E(a)^b = E(a \cdot b)$ without ever learning $a$
+- Alice can decrypt and get $a \cdot b$
+- This is the core of the **Multiplicative-to-Additive (MtA) protocol** that appears in all threshold ECDSA schemes
 
 ### 2.3 The Multiplicative-to-Additive (MtA) Protocol
 
