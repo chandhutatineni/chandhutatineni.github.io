@@ -49,6 +49,17 @@ ninja.data = [{
             window.location.href = "/blog/2025/VAEs/";
           
         },
+      },{id: "post-spec-driven-development-the-architectural-imperative-for-the-age-of-artificial-intelligence-models-and-operational-implementation",
+        
+          title: "Spec-Driven Development - The Architectural Imperative for the Age of Artificial Intelligence Models,...",
+        
+        description: "A Practitioner&#39;s Account of Rebuilding Development Workflows in the Era of AI Abundance",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2025/spec-driven-development/";
+          
+        },
       },{id: "post-analysis-of-privacy-preserving-machine-learning-in-the-age-of-sensitive-data",
         
           title: "Analysis of Privacy-Preserving Machine Learning in the Age of Sensitive Data",
