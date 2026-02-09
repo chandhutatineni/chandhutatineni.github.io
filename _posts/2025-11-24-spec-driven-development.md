@@ -111,7 +111,7 @@ Here, SDD borrows heavily from BDD. Requirements are articulated as user stories
 
 **Template for Functional Requirements:**
 
-```markdown
+````markdown
 ### Functional Requirements
 
 #### FR-1: User Registration
@@ -135,7 +135,7 @@ Here, SDD borrows heavily from BDD. Requirements are articulated as user stories
 - **When:** They provide the refresh_token
 - **Then:** Issue a new access_token without requiring credentials
 - **Security:** Refresh tokens must be rotated on each use; old refresh token is invalidated
-```
+````
 
 #### **3.1.3 Technical Constraints (The "How")**
 
@@ -147,7 +147,7 @@ This is the most critical section for preventing technical debt. It explicitly d
 
 **Template for Technical Constraints:**
 
-```markdown
+````markdown
 ### Technical Constraints
 
 #### Tech Stack
@@ -160,15 +160,15 @@ This is the most critical section for preventing technical debt. It explicitly d
 
 #### Architecture & Code Organization
 - Use Hexagonal Architecture (ports & adapters)
+
 - Directory structure:
-  ```
   src/
   ├── api/          # FastAPI routes (controllers)
   ├── domain/       # Business logic (entities, use cases)
   ├── infrastructure/  # Data access (DB, external APIs)
   ├── ports/        # Interfaces/ABCs
   └── schemas/      # Pydantic models
-  ```
+
 - Every route must be async: `async def endpoint(...) -> Response`
 - Never call sync functions from async routes (leads to deadlocks)
 
@@ -185,7 +185,7 @@ This is the most critical section for preventing technical debt. It explicitly d
 - ✅ ACID transactions for multi-step operations (e.g., debit account + credit account)
 - ✅ All queries must use parameterized statements (SQLAlchemy ORM handles this)
 - ✅ Add PostgreSQL indexes for any foreign key or WHERE clause column
-```
+````
 
 #### **3.1.4 Interface Definitions**
 
@@ -276,7 +276,7 @@ This file acts as the "System 1" thinking for the AI agent. It is loaded into th
 
 **Template for AGENTS.md (Project Constitution):**
 
-```markdown
+````markdown
 # AGENTS.md: The Constitution for AI Agents in This Repository
 
 ## Preamble
@@ -417,7 +417,7 @@ Ask yourself: Is there a similar function I can reuse?
 2. Check src/utils/ for reusable code
 3. Look at an existing similar feature for the pattern
 4. Raise explicit errors rather than silent failures
-```
+````
 
 This constitution is committed to the repository and provided to the AI at the start of every session. It prevents drift and establishes non-negotiable standards.
 
@@ -432,7 +432,7 @@ One of the most potent techniques in writing specs for AI is **Few-Shot Promptin
 
 Include this in your SPEC.md under a "Golden Examples" section:
 
-```markdown
+````markdown
 ## Golden Examples (Few-Shot Reference)
 
 Use these as templates for the code you generate. The style, error handling, and patterns here are immutable.
@@ -657,7 +657,7 @@ Before any code is generated, the developer prompts the agent to explore the exi
 **Concrete Example of Research Phase:**
 
 **Prompt to AI:**
-```
+````
 You are a code analyst. I need you to analyze our codebase to understand the current authentication system.
 
 Please:
