@@ -11,7 +11,7 @@ thumbnail: assets/img/mpc/cover.png
 
 ## **Foreword: A Personal Lens**
 
-This document is rooted in hands-on experience building production systems across 15+ projects using AI-assisted development from 2023 through early 2026. It is not a theoretical exercise or a speculative forecast. Rather, it is a chronicle of patterns observed, failures endured, and disciplines discovered through the grinding work of shipping real software in real time, under the pressure of institutional deadlines.
+This document is rooted in hands-on experience building production systems across 15+ projects using AI-assisted development from end of 2024 through early 2026. It is not a theoretical exercise or a speculative forecast. Rather, it is a chronicle of patterns observed, failures endured, and disciplines discovered through the grinding work of shipping real software in real time, under the pressure of institutional deadlines.
 
 The practices outlined here emerged not from doctrine but from necessity. Every principle described has been tested in the furnace of production—tested against the real stupidity that an AI can generate when given freedom, tested against the real pressure to ship fast, and tested against the real human cost when specifications fail.
 
