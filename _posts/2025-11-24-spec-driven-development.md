@@ -6,8 +6,14 @@ description: A Practitioner's Account of Rebuilding Development Workflows in the
 tags: EA
 categories: EA
 related_posts: false
-thumbnail: assets/img/mpc/cover.png
+thumbnail: assets/img/spec/spec.png
 ---
+
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/spec/spec.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+    </div>
+</div>
 
 ## **Foreword: A Personal Lens**
 
