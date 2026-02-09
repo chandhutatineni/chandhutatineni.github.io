@@ -111,7 +111,6 @@ Here, SDD borrows heavily from BDD. Requirements are articulated as user stories
 
 **Template for Functional Requirements:**
 
-````markdown
 ### Functional Requirements
 
 #### FR-1: User Registration
@@ -135,7 +134,6 @@ Here, SDD borrows heavily from BDD. Requirements are articulated as user stories
 - **When:** They provide the refresh_token
 - **Then:** Issue a new access_token without requiring credentials
 - **Security:** Refresh tokens must be rotated on each use; old refresh token is invalidated
-````
 
 #### **3.1.3 Technical Constraints (The "How")**
 
@@ -147,7 +145,6 @@ This is the most critical section for preventing technical debt. It explicitly d
 
 **Template for Technical Constraints:**
 
-````markdown
 ### Technical Constraints
 
 #### Tech Stack
@@ -160,15 +157,15 @@ This is the most critical section for preventing technical debt. It explicitly d
 
 #### Architecture & Code Organization
 - Use Hexagonal Architecture (ports & adapters)
-
 - Directory structure:
+  ```
   src/
   ├── api/          # FastAPI routes (controllers)
   ├── domain/       # Business logic (entities, use cases)
   ├── infrastructure/  # Data access (DB, external APIs)
   ├── ports/        # Interfaces/ABCs
   └── schemas/      # Pydantic models
-
+  ```
 - Every route must be async: `async def endpoint(...) -> Response`
 - Never call sync functions from async routes (leads to deadlocks)
 
@@ -185,7 +182,6 @@ This is the most critical section for preventing technical debt. It explicitly d
 - ✅ ACID transactions for multi-step operations (e.g., debit account + credit account)
 - ✅ All queries must use parameterized statements (SQLAlchemy ORM handles this)
 - ✅ Add PostgreSQL indexes for any foreign key or WHERE clause column
-````
 
 #### **3.1.4 Interface Definitions**
 
@@ -276,7 +272,6 @@ This file acts as the "System 1" thinking for the AI agent. It is loaded into th
 
 **Template for AGENTS.md (Project Constitution):**
 
-````markdown
 # AGENTS.md: The Constitution for AI Agents in This Repository
 
 ## Preamble
@@ -417,7 +412,6 @@ Ask yourself: Is there a similar function I can reuse?
 2. Check src/utils/ for reusable code
 3. Look at an existing similar feature for the pattern
 4. Raise explicit errors rather than silent failures
-````
 
 This constitution is committed to the repository and provided to the AI at the start of every session. It prevents drift and establishes non-negotiable standards.
 
@@ -432,7 +426,6 @@ One of the most potent techniques in writing specs for AI is **Few-Shot Promptin
 
 Include this in your SPEC.md under a "Golden Examples" section:
 
-````markdown
 ## Golden Examples (Few-Shot Reference)
 
 Use these as templates for the code you generate. The style, error handling, and patterns here are immutable.
@@ -638,32 +631,6 @@ async def process_payment(user_id: UUID, amount: Decimal) -> PaymentResult:
 - User-facing error messages that don't expose implementation details
 
 Use these examples as your template. When creating new functions, match this style exactly.
-
-## ---
-
-**4\. Operational Workflows: The RPI Cycle**
-
-Having defined the artifacts, we must now examine the *process*. How does a team actually build software using SDD? The industry has coalesced around a workflow often referred to as the **RPI Cycle**: Research, Plan, Implement.
-
-### **4.1 Phase 1: Research (Context Gathering)**
-
-The most common failure mode in AI coding is the "hallucinated dependency." An agent attempts to import a library that doesn't exist or reinvents a wheel that is already turning elsewhere in the codebase. The Research phase is designed to mitigate this.
-
-Before any code is generated, the developer prompts the agent to explore the existing codebase.
-
-* *Prompt:* "Analyze src/auth and src/database. Explain how user roles are currently managed and identify any reusable middleware for permission checking."  
-* *Outcome:* The agent builds a "mental model" of the existing system. It identifies that a checkPermission function already exists, preventing it from writing a duplicate verifyUserAccess function later. This phase grounds the AI in reality.
-
-**Concrete Example of Research Phase:**
-
-**Prompt to AI:**
-````
-You are a code analyst. I need you to analyze our codebase to understand the current authentication system.
-
-Please:
-1. Read src/auth/models.py and summarize the User entity structure
-2. Read src/auth/services.py and list all public functions
-3. Read src/middleware/ and identify any existing auth/permission middleware
 4. Identify the database ORM pattern used (SQLAlchemy, Prisma, etc.)
 5. Tell me: is there already a role-based access control (RBAC) system? If yes, describe it.
 
