@@ -93,9 +93,9 @@ ninja.data = [{
             window.location.href = "/blog/2025/Domain-specific-Knowledge-Distillation.md/";
           
         },
-      },{id: "post-architecting-grap-rag-for-enterprise",
+      },{id: "post-architecting-graph-rag-for-enterprise",
         
-          title: "Architecting Grap Rag for Enterprise",
+          title: "Architecting Graph RAG for Enterprise",
         
         description: "Architecting Graph Retrieval-Augmented Generation for Billion-Scale Knowledge Bases - Challenges, Solutions, and Future Trajectories",
         section: "Posts",
